@@ -1,32 +1,9 @@
-
-
-// I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
-// for both classes must be in the include path of your project
 #include "I2Cdev.h"
-
 #include "MPU6050_6Axis_MotionApps20.h"
-//#include "MPU6050.h" // not necessary if using MotionApps include file
+#include "Wire.h"
 
-// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
-// is used in I2Cdev.h
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include "Wire.h"
-#endif
+MPU6050 mpu;                                              // class default I2C address is 0x68
 
-// class default I2C address is 0x68
-// specific I2C addresses may be passed as a parameter here
-// AD0 low = 0x68 (default for SparkFun breakout and InvenSense evaluation board)
-// AD0 high = 0x69
-MPU6050 mpu;
-
-//MPU6050 mpu(0x69); // <-- use for AD0 high
-
-/* =========================================================================
-   NOTE: In addition to connection 3.3v, GND, SDA, and SCL, this sketch
-   depends on the MPU-6050's INT pin being connected to the Arduino's
-   external interrupt #0 pin. On the Arduino Uno and Mega 2560, this is
-   digital I/O pin 2.
- * ========================================================================= */
 
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 bool blinkState = false;
@@ -79,15 +56,15 @@ int8_t flag=0, flag_1=0, flag_2=0, flag_3=0, flag_4=0;
 
 
 
-
-// ================================================================
-// ===                      INITIAL SETUP                       ===
-// ================================================================
+//           ================================================================
+//           ================================================================
+//           ===                      INITIAL SETUP                       ===
+//           ================================================================
 
 void setup() {
 
 
-    Serial.println("HELOOOO");
+    Serial.println("HELOOOO ");
     DDRD |= B11110000;                                                        //Configure digital poort 4, 5, 6 and 7 as output.
  
     Wire.begin();
@@ -104,19 +81,18 @@ void setup() {
         Fastwire::setup(400, true);
     #endif
 
-    // initialize serial communication
-    // (115200 chosen because it is required for Teapot Demo output, but it's
-    // really up to you depending on your project)
-    Serial.begin(115200);
+    
+    
+    Serial.begin(115200);                                                    // initialize serial communication
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
     
     mpu.initialize();
 
-     PCICR |= (1 << PCIE0);    // set PCIE0 to enable PCMSK0 scan
-  PCMSK0 |= (1 << PCINT0);  // set PCINT0 (digital input 8) to trigger an interrupt on state change
-  PCMSK0 |= (1 << PCINT1);  // set PCINT1 (digital input 9)to trigger an interrupt on state change
-  PCMSK0 |= (1 << PCINT2);  // set PCINT2 (digital input 10)to trigger an interrupt on state change
-  PCMSK0 |= (1 << PCINT3);  // set PCINT3 (digital input 11)to trigger an interrupt on state change
+    PCICR |= (1 << PCIE0);    // set PCIE0 to enable PCMSK0 scan
+    PCMSK0 |= (1 << PCINT0);  // set PCINT0 (digital input 8) to trigger an interrupt on state change
+    PCMSK0 |= (1 << PCINT1);  // set PCINT1 (digital input 9)to trigger an interrupt on state change
+    PCMSK0 |= (1 << PCINT2);  // set PCINT2 (digital input 10)to trigger an interrupt on state change
+    PCMSK0 |= (1 << PCINT3);  // set PCINT3 (digital input 11)to trigger an interrupt on state change
 
     // verify connection
     Serial.println(F("Testing device connections..."));
@@ -143,16 +119,6 @@ void setup() {
         // turn on the DMP, now that it's ready
         Serial.println(F("Enabling DMP..."));
         mpu.setDMPEnabled(true);
-/*
-        // enable Arduino interrupt detection
-        Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
-        attachInterrupt(0, dmpDataReady, RISING);
-        mpuIntStatus = mpu.getIntStatus();
-
-        // set our DMP Ready flag so the main loop() function knows it's okay to use it
-        Serial.println(F("DMP ready! Waiting for first interrupt..."));
-        dmpReady = true;
-*/
         // get expected DMP packet size for later comparison
         packetSize = mpu.dmpGetFIFOPacketSize();
     } else {
@@ -173,9 +139,9 @@ void setup() {
   PCMSK0 |= (1 << PCINT3);                                                  //Set PCINT3 (digital input 11)to trigger an interrupt on state change.
 
 
-    // configure LED for output
-    pinMode(LED_PIN, OUTPUT);
-    Serial.print("setup complete");
+  // configure LED for output
+  pinMode(LED_PIN, OUTPUT);
+  Serial.print("setup complete");
 }
 
 
@@ -238,8 +204,6 @@ void GetPosition(){
 }
 
 
-
-
 /********************************* error ***************************/
 
 void CalcError(){
@@ -247,22 +211,12 @@ void CalcError(){
   err_ax=receiver_input_channel_1-ypr[2];
   err_ay=receiver_input_channel_1-ypr[1];
   
-  /*Serial.print(err_ax);
-  
-  Serial.print(" ");
-  Serial.print(err_gx);
-  
-  Serial.print(" ");*/
-
   err_ay=in_ay-ay;
   err_gy=in_gy-gy;
 
   err_az=in_az-az;
   err_gz=in_gz-gz;
-  
-  
-
-  
+    
 }
 
 /********************************** PID ******************************************/
@@ -283,35 +237,23 @@ void SetPulse() {
 /*********************************** MOVE MOTOR ************************************/
 void MoveMotor(){
 
-    pulse_1=receiver_input_channel_2;
-    //Serial.println(pulse_1);
-    
-  
+   pulse_1=receiver_input_channel_2;
+   pulse_2=1000;
    t_initial=micros();
    PORTD |= B11110000;  
-   //PORTD |= B00001111;//Set digital port 3, 5, 6 and 7 high.
-   
-  
+   //PORTD |= B00001111;//Set digital port 3, 5, 6 and 7 high.      
       
-      
-//      delayMicroseconds(pulse);                                                //Wait 1000us.
-//      PORTD &= Bflag_40010111;                                                     //Set digital poort 4, 5, 6 and 7 low.
-    //delayMicroseconds(2000);
-      
-      while(PORTD >= 16){                                                       //Stay in this loop until output 4,5,6 and 7 are low.
-    t = micros()-t_initial; 
-    if(pulse_1 <= t)PORTD &= B11101111;                //Set digital output 4 to low if the time is expired.
-    if(pulse_1 <= t)PORTD &= B11011111;                //Set digital output 5 to low if the time is expired.
-    if(pulse_1 <= t)PORTD &= B10111111;                //Set digital output 6 to low if the time is expired.
-    if(pulse_1 <= t)PORTD &= B01111111;                //Set digital output 7 to low if the time is expired.
+    while(PORTD >= 16){                                                       //Stay in this loop until output 4,5,6 and 7 are low.
+      t = micros()-t_initial; 
+      if(pulse_4 <= t)PORTD &= B11101111;                //Set digital output 4 to low if the time is expired. move motor 4
+      if(pulse_3<= t)PORTD &= B11011111;                //Set digital output 5 to low if the time is expired. move motor 3
+      if(pulse_2 <= t)PORTD &= B10111111;                //Set digital output 6 to low if the time is expired. move motor 2
+      if(pulse_1 <= t)PORTD &= B01111111;                //Set digital output 7 to low if the time is expired. 
   }
    
  
 
 }
-
-
-
 
 // ================================================================
 // ===                    MAIN PROGRAM LOOP                     ===
@@ -326,21 +268,10 @@ GetPosition();
 //PID();
 //SetPulse();
 MoveMotor();
-/*Serial.print(timer_1);
-Serial.print(" ");
-Serial.print(timer_2);
-Serial.print(" ");
-Serial.print(timer_3);
-Serial.print(" ");
-Serial.println(timer_4);
-delay(500); */
-Serial.println((float)analogRead(A0)/1023*5*2.58);
 
-  //delay(250);
- 
- //print_signals();
- while(micros()-t_loop<4000){}
- //Serial.println(micros()-t_loop);
+//Serial.println((float)analogRead(A0)/1023*5*2.58);
+ //while(micros()-t_loop<4000){}
+Serial.println(micros()-t_loop);
  
    
 }
