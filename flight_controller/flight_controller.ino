@@ -245,7 +245,8 @@ void GetPosition(){
 void CalcError(){
 
   err_ax=receiver_input_channel_1-ypr[2];
-  err_gx=0-gx;
+  err_ay=receiver_input_channel_1-ypr[1];
+  
   /*Serial.print(err_ax);
   
   Serial.print(" ");
@@ -266,9 +267,10 @@ void CalcError(){
 
 /********************************** PID ******************************************/
 void PID() {
-  pid_x=(Kpx*err_ax+Kix*err_gx)/100;
+  pid_x=(Kpx*err_ax+Kix*gx)/100;
   pid_y=(Kpy*err_ay+Kix*err_gy)/100;
- // Serial.println(pid_x);
+ Serial.println(err_ax);
+ Serial.println(err_ay);
   
 }
 
@@ -281,8 +283,8 @@ void SetPulse() {
 /*********************************** MOVE MOTOR ************************************/
 void MoveMotor(){
 
-    pulse_1=(receiver_input_channel_2/20*5)+1500;
-    Serial.println(pulse_1);
+    pulse_1=receiver_input_channel_2;
+    //Serial.println(pulse_1);
     
   
    t_initial=micros();
@@ -295,10 +297,9 @@ void MoveMotor(){
 //      delayMicroseconds(pulse);                                                //Wait 1000us.
 //      PORTD &= Bflag_40010111;                                                     //Set digital poort 4, 5, 6 and 7 low.
     //delayMicroseconds(2000);
+      
       while(PORTD >= 16){                                                       //Stay in this loop until output 4,5,6 and 7 are low.
     t = micros()-t_initial; 
-    
-    //Serial.println(t-pulse_1);//Read the current time.
     if(pulse_1 <= t)PORTD &= B11101111;                //Set digital output 4 to low if the time is expired.
     if(pulse_1 <= t)PORTD &= B11011111;                //Set digital output 5 to low if the time is expired.
     if(pulse_1 <= t)PORTD &= B10111111;                //Set digital output 6 to low if the time is expired.
@@ -319,7 +320,7 @@ void MoveMotor(){
 void loop() {
 //Serial.println("hallo");
 t_loop=micros();
-//GetPosition();
+GetPosition();
 
 //CalcError();
 //PID();
@@ -333,6 +334,7 @@ Serial.print(timer_3);
 Serial.print(" ");
 Serial.println(timer_4);
 delay(500); */
+Serial.println((float)analogRead(A0)/1023*5*2.58);
 
   //delay(250);
  
